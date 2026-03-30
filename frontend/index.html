@@ -1,0 +1,2341 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>FreelaFin</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #060d1a;
+    --surface: #0d1829;
+    --surface2: #111f33;
+    --surface3: #162540;
+    --border: #1e3050;
+    --green: #39ff6e;
+    --green-dim: #1a8a3a;
+    --green-glow: rgba(57,255,110,0.15);
+    --orange: #ff6b35;
+    --red: #ff4545;
+    --text: #e8f0fe;
+    --text-muted: #6b8aaa;
+    --text-dim: #3a5070;
+    --accent: #39ff6e;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* PHONE SHELL */
+  .shell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 30% 20%, rgba(57,255,110,0.04) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(57,100,255,0.03) 0%, transparent 60%),
+                #020810;
+    padding: 20px;
+  }
+
+  .phone {
+    width: 390px;
+    height: 844px;
+    background: var(--bg);
+    border-radius: 44px;
+    border: 1.5px solid #1e3050;
+    box-shadow: 0 0 0 6px #0a1520, 0 40px 120px rgba(0,0,0,0.8), 0 0 60px rgba(57,255,110,0.05);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* NOTCH */
+  .notch {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 126px;
+    height: 34px;
+    background: #020810;
+    border-radius: 0 0 20px 20px;
+    z-index: 100;
+  }
+
+  /* SCREENS */
+  .screens {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    margin-top: 44px;
+  }
+
+  .screen {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 0 80px 0;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(30px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    scrollbar-width: none;
+  }
+  .screen::-webkit-scrollbar { display: none; }
+  .screen.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateX(0);
+  }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    height: 72px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 8px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 50;
+  }
+
+  .nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 12px;
+    transition: all 0.2s;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .nav-btn.active { color: var(--green); }
+  .nav-btn svg { width: 22px; height: 22px; transition: transform 0.2s; }
+  .nav-btn.active svg { filter: drop-shadow(0 0 6px rgba(57,255,110,0.5)); }
+
+  /* ===== COMMON COMPONENTS ===== */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 8px;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--green);
+    letter-spacing: -0.5px;
+  }
+
+  .topbar-icons { display: flex; gap: 12px; align-items: center; }
+
+  .icon-btn {
+    width: 36px; height: 36px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .icon-btn:hover { border-color: var(--green); }
+
+  .avatar {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--green-dim), #0a4020);
+    border-radius: 50%;
+    border: 2px solid var(--green);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    overflow: hidden;
+  }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 20px 20px 8px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 0 16px 12px;
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: #2a4060; }
+
+  .card-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .amount-huge {
+    font-family: 'Syne', sans-serif;
+    font-size: 38px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -1.5px;
+    line-height: 1;
+  }
+
+  .amount-large {
+    font-family: 'Syne', sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -1px;
+    line-height: 1.1;
+  }
+
+  .amount-green { color: var(--green); }
+  .amount-orange { color: var(--orange); }
+  .amount-red { color: var(--red); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .badge-green { background: rgba(57,255,110,0.12); color: var(--green); border: 1px solid rgba(57,255,110,0.2); }
+  .badge-orange { background: rgba(255,107,53,0.12); color: var(--orange); border: 1px solid rgba(255,107,53,0.2); }
+  .badge-blue { background: rgba(60,140,255,0.12); color: #60aaff; border: 1px solid rgba(60,140,255,0.2); }
+  .badge-red { background: rgba(255,69,69,0.12); color: var(--red); border: 1px solid rgba(255,69,69,0.2); }
+  .badge-purple { background: rgba(160,100,255,0.12); color: #c080ff; border: 1px solid rgba(160,100,255,0.2); }
+
+  .progress-bar {
+    height: 4px;
+    background: var(--surface3);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--green), #00c851);
+    box-shadow: 0 0 8px rgba(57,255,110,0.4);
+    transition: width 0.8s ease;
+  }
+  .progress-fill.orange { background: linear-gradient(90deg, var(--orange), #ff8a50); }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 0;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .btn-green {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: calc(100% - 32px);
+    margin: 12px 16px;
+    padding: 18px;
+    background: var(--green);
+    color: #020810;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(57,255,110,0.25);
+    transition: all 0.2s;
+  }
+  .btn-green:hover { background: #50ff80; box-shadow: 0 0 30px rgba(57,255,110,0.4); }
+
+  .btn-outline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: calc(100% - 32px);
+    margin: 8px 16px;
+    padding: 16px;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-outline:hover { border-color: var(--green); color: var(--green); }
+
+  /* FAB */
+  .fab {
+    position: absolute;
+    right: 20px;
+    bottom: 90px;
+    width: 52px;
+    height: 52px;
+    background: var(--green);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(57,255,110,0.35);
+    z-index: 10;
+    border: none;
+    transition: all 0.2s;
+  }
+  .fab:hover { transform: scale(1.08); box-shadow: 0 0 30px rgba(57,255,110,0.5); }
+
+  /* INPUT */
+  .input-group { padding: 0 16px 12px; }
+  .input-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .input-field {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .input-field input {
+    background: none;
+    border: none;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    flex: 1;
+    width: 100%;
+  }
+  .input-field input::placeholder { color: var(--text-dim); }
+  .input-field:focus-within { border-color: var(--green); }
+
+  /* ===== SCREEN 1: HOME ===== */
+  #home .hero-greeting {
+    padding: 8px 20px 4px;
+  }
+  #home .hero-greeting .sub {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--green);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  #home .hero-greeting h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    color: var(--text);
+  }
+  #home .hero-greeting h1 em {
+    color: var(--green);
+    font-style: normal;
+  }
+  #home .hero-greeting p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+
+  .revenue-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 12px 16px 8px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .revenue-card::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 100px; height: 100px;
+    background: var(--green-glow);
+    border-radius: 50%;
+  }
+
+  .revenue-row { display: flex; gap: 10px; margin: 8px 16px; }
+  .revenue-mini {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .revenue-mini .mini-label { font-size: 10px; color: var(--text-muted); font-weight: 500; margin-bottom: 6px; }
+  .revenue-mini .mini-val { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; }
+
+  .insight-card {
+    background: linear-gradient(135deg, rgba(57,255,110,0.08), rgba(57,255,110,0.02));
+    border: 1px solid rgba(57,255,110,0.15);
+    border-radius: 12px;
+    margin: 0 16px 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .insight-icon {
+    width: 32px; height: 32px;
+    background: rgba(57,255,110,0.15);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* Tax card */
+  .tax-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .tax-item:last-child { border-bottom: none; }
+
+  /* Distribution */
+  .dist-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    font-size: 13px;
+  }
+  .dist-item-left { display: flex; align-items: center; gap: 10px; }
+  .dist-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* Donut chart */
+  .donut-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 0;
+    position: relative;
+  }
+  .donut-label-center {
+    position: absolute;
+    text-align: center;
+  }
+  .donut-label-center .pct {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--green);
+  }
+  .donut-label-center .sub {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  /* ===== SCREEN: PROJECTS ===== */
+  .proj-stats { display: flex; gap: 10px; padding: 8px 16px; }
+  .proj-stat {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .proj-stat .ps-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .proj-stat .ps-val { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
+  .ps-val.green { color: var(--green); }
+
+  .proj-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 0 16px 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: pointer;
+  }
+  .proj-card:hover { border-color: #2a4060; transform: translateY(-1px); }
+  .proj-card .proj-name { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin: 6px 0 2px; }
+  .proj-card .proj-client { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+  .proj-card .proj-amounts { display: flex; justify-content: space-between; margin-top: 14px; }
+  .proj-card .pa-block .pal { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+  .proj-card .pa-block .pav { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+  .proj-card .proj-footer { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px; }
+
+  /* ===== SCREEN: CLIENT ===== */
+  .client-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 20px 16px;
+    text-align: center;
+  }
+  .client-avatar {
+    width: 80px; height: 80px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #1a3a5c, #0d2035);
+    border: 2px solid var(--green);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .client-avatar .online-dot {
+    position: absolute;
+    bottom: -4px; right: -4px;
+    width: 20px; height: 20px;
+    background: var(--green);
+    border-radius: 50%;
+    border: 3px solid var(--bg);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .client-name { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+  .client-resp { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+  .contact-btns { display: flex; gap: 10px; padding: 8px 16px; }
+  .contact-btn {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .contact-btn:hover { border-color: var(--green); color: var(--text); }
+
+  .nfe-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .nfe-item:last-child { border-bottom: none; }
+  .nfe-left { display: flex; align-items: center; gap: 12px; }
+  .nfe-icon {
+    width: 38px; height: 38px;
+    background: var(--surface2);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nfe-num { font-weight: 600; font-size: 13px; }
+  .nfe-date { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ===== SCREEN: TASKS ===== */
+  .tasks-hero {
+    padding: 8px 20px 16px;
+  }
+  .tasks-hero .sub { font-size: 11px; color: var(--green); font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+  .tasks-hero h1 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+  .tasks-hero p { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+  .task-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 16px 8px;
+  }
+  .task-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .task-sec-icon {
+    width: 32px; height: 32px;
+    background: var(--surface2);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .task-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin: 0 16px 8px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .task-item.urgent { border-left: 3px solid var(--red); }
+  .task-item.upcoming { border-left: 3px solid #60aaff; }
+
+  .task-checkbox {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 1px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .task-checkbox:hover { border-color: var(--green); }
+  .task-checkbox.checked { background: var(--green); border-color: var(--green); }
+
+  .task-content { flex: 1; }
+  .task-title { font-weight: 600; font-size: 14px; margin-bottom: 3px; }
+  .task-sub { font-size: 11px; color: var(--text-muted); }
+  .task-warning { font-size: 11px; color: var(--orange); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+  .task-action {
+    width: 32px; height: 32px;
+    background: var(--surface2);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .task-action:hover { background: var(--green-glow); }
+
+  .proj-task-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 0 16px 12px;
+    padding: 16px;
+  }
+  .ptc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .ptc-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-top: 4px; }
+  .ptc-sub-task {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  /* ===== SCREEN: NEW CLIENT ===== */
+  .new-client-hero { padding: 8px 20px 20px; }
+  .new-client-hero .sub { font-size: 10px; color: var(--green); font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+  .new-client-hero h1 { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.1; }
+  .new-client-hero p { font-size: 13px; color: var(--text-muted); margin-top: 8px; line-height: 1.5; }
+
+  .upload-area {
+    margin: 0 16px 16px;
+    background: var(--surface);
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .upload-area:hover { border-color: var(--green); background: var(--green-glow); }
+  .upload-icon { width: 48px; height: 48px; background: var(--surface2); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+  .upload-label { font-size: 12px; color: var(--text-muted); }
+
+  .tip-box {
+    margin: 0 16px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--green);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .tip-title { font-size: 11px; font-weight: 700; color: var(--green); margin-bottom: 4px; }
+  .tip-text { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+  .select-field {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b8aaa' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    cursor: pointer;
+  }
+
+  .comm-section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 8px 20px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .comm-section-title::before {
+    content: '';
+    width: 4px;
+    height: 18px;
+    background: var(--green);
+    border-radius: 2px;
+  }
+
+  /* ===== SCREEN: NEW PROJECT ===== */
+  .new-proj-hero { padding: 8px 20px 20px; }
+  .new-proj-hero .sub { font-size: 10px; color: var(--green); font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+  .new-proj-hero h1 { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.1; }
+  .new-proj-hero h1 em { color: var(--green); font-style: normal; display: block; }
+  .new-proj-hero p { font-size: 13px; color: var(--text-muted); margin-top: 8px; line-height: 1.5; }
+
+  .payment-options { display: flex; gap: 10px; padding: 0 16px 16px; }
+  .pay-opt {
+    flex: 1;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .pay-opt.active { border-color: var(--green); background: rgba(57,255,110,0.05); }
+  .pay-opt-icon { font-size: 20px; margin-bottom: 6px; }
+  .pay-opt-label { font-size: 13px; font-weight: 600; }
+
+  .summary-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 0 16px 12px;
+    padding: 20px;
+  }
+  .summary-box h3 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+  .summary-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-row .sr-label { color: var(--text-muted); }
+  .summary-row .sr-val { font-weight: 600; }
+  .summary-row .sr-note { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+  /* ===== SCREEN: SIMULATOR ===== */
+  .sim-hero { padding: 8px 20px 4px; }
+  .sim-hero .sub { font-size: 10px; color: var(--green); font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+  .sim-hero h2 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
+  .sim-hero p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  .slider-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 12px 16px;
+    padding: 20px;
+  }
+  .slider-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .slider-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 40px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--surface3);
+    border-radius: 4px;
+    outline: none;
+    margin-bottom: 8px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--green);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(57,255,110,0.5);
+  }
+  .slider-limits { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-dim); }
+
+  .liquid-box {
+    background: linear-gradient(135deg, rgba(57,255,110,0.1), rgba(57,255,110,0.03));
+    border: 1px solid rgba(57,255,110,0.2);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 12px;
+  }
+  .liquid-label { font-size: 10px; color: var(--green); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 4px; }
+  .liquid-val { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; color: var(--green); }
+  .liquid-sub { font-size: 11px; color: rgba(57,255,110,0.6); margin-top: 2px; }
+
+  .tax-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 0 16px 12px;
+    padding: 18px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .tax-icon {
+    width: 40px; height: 40px;
+    background: var(--surface2);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .tax-content { flex: 1; }
+  .tax-name { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+  .tax-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+  .tax-label-sm { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; }
+  .tax-val-big { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
+
+  .tip-card-green {
+    background: linear-gradient(135deg, rgba(57,255,110,0.15), rgba(57,255,110,0.05));
+    border: 1px solid rgba(57,255,110,0.25);
+    border-radius: var(--radius);
+    margin: 0 16px 12px;
+    padding: 20px;
+  }
+  .tip-icon-circle {
+    width: 36px; height: 36px;
+    background: rgba(57,255,110,0.2);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 10px;
+  }
+  .tip-card-green p { font-size: 13px; color: rgba(255,255,255,0.85); line-height: 1.5; margin-top: 6px; }
+
+  .detail-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 0 16px 16px;
+    padding: 20px;
+  }
+  .detail-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .detail-header h3 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .detail-row .dr-left .dr-label { color: var(--text-muted); }
+  .detail-row .dr-left .dr-sub { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+  .detail-row .dr-val { font-weight: 600; }
+  .detail-row .dr-val.green { color: var(--green); }
+  .detail-row .dr-val.red { color: var(--red); }
+  .total-row {
+    border-top: 2px solid var(--border);
+    padding-top: 14px;
+    margin-top: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .total-row .tr-label { font-weight: 600; font-size: 14px; }
+  .total-row .tr-val { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--green); }
+
+  /* ===== SCREEN: FORECAST ===== */
+  .forecast-hero { padding: 8px 20px 4px; }
+  .forecast-hero h1 { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+  .forecast-hero p { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+  .saldo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 12px 16px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .saldo-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
+  .saldo-amount { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; letter-spacing: -1px; margin: 4px 0 2px; }
+  .growth-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: rgba(57,255,110,0.12);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--green);
+    float: right;
+    margin-top: 6px;
+  }
+
+  /* Chart area */
+  .chart-area {
+    height: 140px;
+    position: relative;
+    margin-top: 16px;
+  }
+  .chart-svg { width: 100%; height: 100%; }
+  .chart-note { font-size: 10px; color: var(--text-dim); margin-top: 6px; font-style: italic; }
+  .chart-months { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+  .vencimento-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin: 0 16px 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .vencimento-item:hover { border-color: #2a4060; }
+  .venc-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .venc-icon.urgent { background: rgba(255,69,69,0.1); border: 1px solid rgba(255,69,69,0.2); }
+  .venc-icon.calendar { background: rgba(60,140,255,0.1); border: 1px solid rgba(60,140,255,0.2); }
+  .venc-icon.doc { background: rgba(57,255,110,0.1); border: 1px solid rgba(57,255,110,0.2); }
+  .venc-content { flex: 1; }
+  .venc-title { font-weight: 600; font-size: 13px; }
+  .venc-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .venc-right { text-align: right; }
+  .venc-amount { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; }
+  .venc-status { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+  .metrics-row { display: flex; gap: 10px; padding: 8px 16px 16px; }
+  .metric-box {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .metric-box .mb-icon { font-size: 18px; margin-bottom: 6px; }
+  .metric-box .mb-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .metric-box .mb-val { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+
+  /* ===== SCREEN: REPORTS ===== */
+  .report-hero { padding: 8px 20px 4px; }
+  .report-hero .sub { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; margin-bottom: 4px; }
+  .report-hero h1 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+  .report-hero h1 em { color: var(--green); font-style: normal; }
+  .report-hero p { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+  .timeline { padding: 16px 16px 0; }
+  .tl-item { display: flex; gap: 16px; padding-bottom: 24px; position: relative; }
+  .tl-item::after {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 20px;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+  .tl-item:last-child::after { display: none; }
+  .tl-dot {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+    z-index: 1;
+  }
+  .tl-dot.active { background: var(--green); box-shadow: 0 0 8px rgba(57,255,110,0.4); }
+  .tl-dot.done { background: var(--surface3); border: 2px solid var(--border); }
+  .tl-dot.old { background: var(--surface3); border: 2px solid var(--text-dim); opacity: 0.5; }
+  .tl-content { flex: 1; }
+  .tl-period { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+
+  .report-card {
+    background: var(--surface);
+    border: 1px solid var(--green);
+    border-radius: var(--radius);
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .report-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--green);
+  }
+  .report-card .rc-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+  .report-card .rc-block .rcb-l { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .report-card .rc-block .rcb-v { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
+  .report-card .rc-block .rcb-v.green { color: var(--green); }
+  .report-btns { display: flex; gap: 8px; margin-top: 12px; }
+  .rc-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+  }
+  .rc-btn.primary { background: var(--green); color: #020810; border-color: var(--green); }
+  .rc-btn:hover { opacity: 0.85; }
+
+  .report-mini {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .report-mini:hover { border-color: #2a4060; }
+  .report-mini-icon {
+    width: 38px; height: 38px;
+    background: var(--surface2);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .report-mini-content { flex: 1; }
+  .rmc-period { font-weight: 600; font-size: 15px; }
+  .rmc-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+  .rmc-val { font-size: 14px; font-weight: 600; }
+
+  .hist-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 24px;
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .hist-btn:hover { color: var(--text-muted); }
+
+  /* ===== SCREEN: CONTRACTS ===== */
+  .contracts-hero { padding: 8px 20px 4px; }
+  .contracts-hero h1 { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+  .contracts-hero p { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+  .search-bar {
+    margin: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: border-color 0.2s;
+  }
+  .search-bar:focus-within { border-color: var(--green); }
+  .search-bar input {
+    background: none;
+    border: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    flex: 1;
+  }
+  .search-bar input::placeholder { color: var(--text-dim); }
+
+  .contract-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 0 16px 10px;
+    padding: 16px;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: pointer;
+  }
+  .contract-card:hover { border-color: #2a4060; transform: translateY(-1px); }
+  .cc-header { display: flex; align-items: flex-start; gap: 12px; }
+  .cc-icon {
+    width: 40px; height: 40px;
+    background: var(--surface2);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .cc-meta { flex: 1; }
+  .cc-badges { display: flex; gap: 6px; margin-bottom: 4px; }
+  .cc-name { font-weight: 700; font-size: 15px; }
+  .cc-date { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .cc-status { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
+  .status-signed { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--green); }
+  .status-pending { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--orange); }
+  .cc-more {
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+  }
+
+  .pipeline-card {
+    background: linear-gradient(135deg, rgba(57,255,110,0.06), rgba(57,255,110,0.02));
+    border: 1px solid rgba(57,255,110,0.15);
+    border-radius: var(--radius);
+    margin: 0 16px 16px;
+    padding: 20px;
+  }
+  .pipeline-card .pc-label { font-size: 10px; color: var(--green); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; margin-bottom: 4px; }
+  .pipeline-card .pc-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+  .pipeline-stats { display: flex; gap: 24px; }
+  .pipeline-stat .ps-l { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .pipeline-stat .ps-v { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; }
+  .pipeline-stat .ps-v.green { color: var(--green); }
+  .pipeline-stat .ps-v.orange { color: var(--orange); }
+
+  /* Bottom nav variants */
+  .nav-alt { display: flex; }
+  .nav-main { display: flex; }
+
+  /* Back button */
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    color: var(--green);
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .screen.active > * {
+    animation: fadeUp 0.4s ease forwards;
+  }
+  .screen.active > *:nth-child(2) { animation-delay: 0.05s; }
+  .screen.active > *:nth-child(3) { animation-delay: 0.1s; }
+  .screen.active > *:nth-child(4) { animation-delay: 0.15s; }
+  .screen.active > *:nth-child(5) { animation-delay: 0.2s; }
+  .screen.active > *:nth-child(6) { animation-delay: 0.25s; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  .pulse { animation: pulse 2s ease-in-out infinite; }
+
+  .mt-4 { margin-top: 4px; }
+  .mt-8 { margin-top: 8px; }
+  .mt-12 { margin-top: 12px; }
+  .pb-0 { padding-bottom: 0; }
+  .text-sm { font-size: 12px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="phone">
+    <div class="notch"></div>
+
+    <div class="screens">
+
+      <!-- ===== HOME ===== -->
+      <div class="screen active" id="screen-home">
+        <div class="topbar">
+          <span class="logo">FreelaFin</span>
+          <div class="topbar-icons">
+            <div class="icon-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b8aaa" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </div>
+            <div class="avatar">🧑</div>
+          </div>
+        </div>
+
+        <div class="hero-greeting" id="home">
+          <div class="sub">Performance Mensal</div>
+          <h1>Seu mês está<br><em>brilhante.</em></h1>
+          <p>Insights de Outubro. Você está 15% acima da meta de economia.</p>
+        </div>
+
+        <div class="revenue-card">
+          <div class="card-label">Fluxo de Receita · Bruto Total</div>
+          <div class="amount-huge">R$ 14.250<span style="font-size:22px;color:var(--text-muted)">,00</span></div>
+          <div class="progress-bar" style="margin:12px 0 8px"><div class="progress-fill" style="width:78%"></div></div>
+          <div class="row">
+            <div class="card-label" style="margin:0">78% da Meta</div>
+            <div style="font-size:12px;color:var(--text-muted)">Líquido: <strong style="color:var(--text)">R$ 11.115,00</strong></div>
+          </div>
+          <div class="insight-card" style="margin:12px 0 0;border-radius:10px;padding:10px 12px">
+            <span style="font-size:18px">⚡</span>
+            <div>
+              <div style="font-size:11px;color:var(--green);font-weight:700">Excelente!</div>
+              <div style="font-size:11px;color:var(--text-muted)">Sua margem líquida cresceu 4% desde o mês passado.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="revenue-row">
+          <div class="revenue-mini">
+            <div class="mini-label">💰 Impostos Pagos</div>
+            <div class="mini-val" style="font-size:16px">R$ 842,50</div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:2px">DAS + IRPF · Em dia</div>
+          </div>
+          <div class="revenue-mini" style="background:linear-gradient(135deg,rgba(57,255,110,0.08),rgba(57,255,110,0.02));border-color:rgba(57,255,110,0.15)">
+            <div class="mini-label" style="color:var(--green)">⚡ Economia IA</div>
+            <div class="mini-val amount-green">R$ 1.204,00</div>
+            <div style="font-size:10px;color:rgba(57,255,110,0.6);margin-top:2px">Otimização bancária</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:center;padding:8px 0 16px;">
+            <svg width="120" height="120" viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="48" fill="none" stroke="var(--surface3)" stroke-width="10"/>
+              <circle cx="60" cy="60" r="48" fill="none" stroke="var(--green)" stroke-width="10"
+                stroke-dasharray="200 301" stroke-dashoffset="-75" stroke-linecap="round"/>
+              <circle cx="60" cy="60" r="48" fill="none" stroke="#60aaff" stroke-width="10"
+                stroke-dasharray="60 301" stroke-dashoffset="-275" stroke-linecap="round"/>
+            </svg>
+            <div style="position:absolute;text-align:center;">
+              <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--green)">PRÓ-LABORE</div>
+              <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800">R$ 6.500</div>
+              <div style="font-size:9px;color:var(--text-muted)">Disponível</div>
+            </div>
+          </div>
+          <div class="row" style="margin-top:4px">
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted)">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div>Uso Livre (65%)
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted)">
+              <div style="width:8px;height:8px;border-radius:50%;background:#60aaff"></div>Reserva (20%)
+            </div>
+          </div>
+          <button class="btn-green" style="margin:14px 0 0;width:100%">Retirar Agora</button>
+        </div>
+
+        <div class="section-label">Distribuição de Gastos</div>
+        <div class="card" style="padding:12px 20px">
+          <div class="dist-item">
+            <div class="dist-item-left"><div class="dist-dot" style="background:#60aaff"></div><span style="font-size:13px">Softwares & Ferramentas</span></div>
+            <span style="font-weight:600;font-size:13px">R$ 450</span>
+          </div>
+          <div class="dist-item">
+            <div class="dist-item-left"><div class="dist-dot" style="background:var(--green)"></div><span style="font-size:13px">Coworking</span></div>
+            <span style="font-weight:600;font-size:13px">R$ 800</span>
+          </div>
+          <div class="dist-item">
+            <div class="dist-item-left"><div class="dist-dot" style="background:var(--orange)"></div><span style="font-size:13px">Transporte</span></div>
+            <span style="font-weight:600;font-size:13px">R$ 290</span>
+          </div>
+        </div>
+
+        <div class="card" style="background:linear-gradient(135deg,rgba(57,255,110,0.06),rgba(57,255,110,0.02));border-color:rgba(57,255,110,0.15)">
+          <div style="font-size:12px;color:var(--green);font-weight:700;margin-bottom:4px">📊 Meta de Investimento</div>
+          <div style="font-size:13px;color:var(--text-muted);line-height:1.5">Você está apenas R$ 400 de completar sua reserva de emergência este mês.</div>
+          <div class="progress-bar" style="margin-top:12px"><div class="progress-fill" style="width:94%"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);margin-top:4px"><span>94% da Meta</span><span>Falta R$ 400</span></div>
+        </div>
+      </div>
+
+      <!-- ===== PROJECTS ===== -->
+      <div class="screen" id="screen-projects">
+        <div class="topbar">
+          <span class="logo">FreelaFin</span>
+          <div class="topbar-icons">
+            <div class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b8aaa" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+            <div class="avatar">🧑</div>
+          </div>
+        </div>
+
+        <div style="padding:8px 20px 4px">
+          <h1 style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-0.5px">Meus Projetos</h1>
+          <p style="font-size:13px;color:var(--text-muted);margin-top:2px">Gerencie seu fluxo de caixa e priorize recebimentos.</p>
+        </div>
+
+        <div class="proj-stats">
+          <div class="proj-stat">
+            <div class="ps-label">Total a Receber</div>
+            <div class="ps-val green" style="font-size:16px">R$ 14.200,00</div>
+          </div>
+          <div class="proj-stat">
+            <div class="ps-label">Ativos</div>
+            <div class="ps-val">08</div>
+          </div>
+          <div class="proj-stat">
+            <div class="ps-label">Concluídos</div>
+            <div class="ps-val green">03</div>
+          </div>
+        </div>
+
+        <div class="proj-card">
+          <div style="display:flex;justify-content:flex-end"><span class="badge badge-orange">Em Execução</span></div>
+          <div class="proj-name">Redesign E-commerce Zen</div>
+          <div class="proj-client">👤 Zenith Digital Ltd.</div>
+          <div class="proj-amounts">
+            <div class="pa-block"><div class="pal">Valor do Contrato</div><div class="pav">R$ 8.500,00</div></div>
+            <div class="pa-block" style="text-align:right"><div class="pal">Restante</div><div class="pav amount-orange">R$ 4.250,00</div></div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div>
+          <div class="proj-footer"><span>50% Pago</span><span>Falta 50%</span></div>
+        </div>
+
+        <div class="proj-card">
+          <div style="display:flex;justify-content:flex-end"><span class="badge badge-blue">Em Briefing</span></div>
+          <div class="proj-name">Identidade Visual Peak</div>
+          <div class="proj-client">👤 Peak Adventure Gear</div>
+          <div class="proj-amounts">
+            <div class="pa-block"><div class="pal">Valor do Contrato</div><div class="pav">R$ 3.200,00</div></div>
+            <div class="pa-block" style="text-align:right"><div class="pal">Restante</div><div class="pav amount-orange">R$ 2.560,00</div></div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:20%"></div></div>
+          <div class="proj-footer"><span>20% Pago</span><span>Falta 80%</span></div>
+        </div>
+
+        <div class="proj-card">
+          <div style="display:flex;justify-content:flex-end"><span class="badge badge-green">Concluído</span></div>
+          <div class="proj-name">Social Media Campanha Outono</div>
+          <div class="proj-client">👤 Boutique Florescer</div>
+          <div class="proj-amounts">
+            <div class="pa-block"><div class="pal">Valor do Contrato</div><div class="pav">R$ 1.800,00</div></div>
+            <div class="pa-block" style="text-align:right"><div class="pal">Restante</div><div class="pav amount-green">R$ 0,00</div></div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+          <div class="proj-footer"><span>100% Pago</span><span>Concluído ✓</span></div>
+        </div>
+
+        <div class="proj-card">
+          <div style="display:flex;justify-content:flex-end"><span class="badge badge-orange">Em Execução</span></div>
+          <div class="proj-name">App Mobile HealthTrack</div>
+          <div class="proj-client">👤 BioSystems Global</div>
+          <div class="proj-amounts">
+            <div class="pa-block"><div class="pal">Valor do Contrato</div><div class="pav">R$ 15.000,00</div></div>
+            <div class="pa-block" style="text-align:right"><div class="pal">Restante</div><div class="pav amount-orange">R$ 10.500,00</div></div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:30%"></div></div>
+          <div class="proj-footer"><span>30% Pago</span><span>Falta 70%</span></div>
+        </div>
+
+        <button class="fab" onclick="showScreen('new-project')">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#020810" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+
+      <!-- ===== CLIENTS ===== -->
+      <div class="screen" id="screen-clients">
+        <div class="topbar">
+          <span class="logo">FreelaFin</span>
+          <div class="topbar-icons">
+            <div class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b8aaa" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+            <div class="avatar">🧑</div>
+          </div>
+        </div>
+
+        <div class="client-hero">
+          <div class="client-avatar">
+            👩‍💼
+            <div class="online-dot">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="#020810"><path d="M20 6L9 17l-5-5" stroke="#020810" stroke-width="3" fill="none"/></svg>
+            </div>
+          </div>
+          <div class="client-name">TechNova Solutions</div>
+          <div class="client-resp">Responsável: Helena Ferreira</div>
+        </div>
+
+        <div class="contact-btns">
+          <div class="contact-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            contato@technova.com
+          </div>
+          <div class="contact-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 10.5 19.36 19.36 0 0 1 1.64 2a2 2 0 0 1 1.91-2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 7.91a16 16 0 0 0 6.1 6.1l.82-.82a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 15.5z"/></svg>
+            (11) 98765-4321
+          </div>
+        </div>
+
+        <div class="section-label" style="padding-top:12px">Resumo Financeiro</div>
+
+        <div class="card">
+          <div class="card-label">Total Recebido</div>
+          <div class="amount-huge">R$ 42.850<span style="font-size:22px;color:var(--text-muted)">,00</span></div>
+          <div style="color:var(--green);font-size:12px;font-weight:600;margin-top:6px;display:flex;align-items:center;gap:4px">
+            <span>↗</span> +12% em relação ao último mês
+          </div>
+        </div>
+
+        <div class="card" style="border-color:rgba(255,107,53,0.2)">
+          <div class="card-label">Pendente de Pagamento</div>
+          <div class="amount-large amount-orange">R$ 12.400<span style="font-size:18px;color:var(--text-muted)">,00</span></div>
+          <div class="progress-bar" style="margin:10px 0 6px"><div class="progress-fill orange" style="width:40%"></div></div>
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">1 Fatura Atrasada</div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 8px">
+          <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim)">Projetos Ativos</div>
+          <span style="font-size:11px;color:var(--green);font-weight:700;cursor:pointer">VER TODOS ›</span>
+        </div>
+
+        <div style="padding:0 16px;display:flex;gap:10px">
+          <div class="proj-card" style="margin:0;flex:1;min-width:200px">
+            <div style="display:flex;justify-content:flex-end"><span class="badge badge-orange" style="font-size:9px">Em Andamento</span></div>
+            <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin:6px 0 2px">Redesign App Mobile</div>
+            <div style="font-size:11px;color:var(--text-muted)">Entrega em 12 de Outubro</div>
+            <div class="progress-bar" style="margin-top:10px"><div class="progress-fill" style="width:65%"></div></div>
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);margin-top:4px;text-transform:uppercase"><span>Progresso</span><span>65%</span></div>
+          </div>
+        </div>
+
+        <div class="section-label" style="padding-top:16px">Histórico de Notas (NF-e)</div>
+        <div class="card" style="padding:12px 20px">
+          <div class="nfe-item">
+            <div class="nfe-left">
+              <div class="nfe-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg></div>
+              <div><div class="nfe-num">NF-e #20240901</div><div class="nfe-date">Emitida em 01 Set 2024</div></div>
+            </div>
+            <div class="task-action"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+          </div>
+          <div class="nfe-item">
+            <div class="nfe-left">
+              <div class="nfe-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg></div>
+              <div><div class="nfe-num">NF-e #20240815</div><div class="nfe-date">Emitida em 15 Ago 2024</div></div>
+            </div>
+            <div class="task-action"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+          </div>
+          <div class="nfe-item">
+            <div class="nfe-left">
+              <div class="nfe-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg></div>
+              <div><div class="nfe-num">NF-e #20240801</div><div class="nfe-date">Emitida em 01 Ago 2024</div></div>
+            </div>
+            <div class="task-action"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+          </div>
+        </div>
+
+        <button class="btn-green" onclick="showScreen('new-client')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#020810" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Nova NF-e para Este Cliente
+        </button>
+      </div>
+
+      <!-- ===== TASKS ===== -->
+      <div class="screen" id="screen-tasks">
+        <div class="topbar">
+          <span class="logo">FreelaFin</span>
+          <div class="topbar-icons">
+            <div class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b8aaa" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+          </div>
+        </div>
+
+        <div class="tasks-hero">
+          <div class="sub">Gestão Operacional</div>
+          <h1>Centro de Tarefas</h1>
+          <p>Você tem <strong style="color:var(--red)">3 tarefas críticas</strong> que expiram hoje.</p>
+        </div>
+
+        <div class="task-section-header">
+          <div class="task-section-title">
+            <div class="task-sec-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+            Fiscal
+          </div>
+          <span class="badge badge-red">Alto Risco</span>
+        </div>
+
+        <div class="task-item urgent">
+          <div class="task-checkbox" onclick="toggleCheck(this)"></div>
+          <div class="task-content">
+            <div class="task-title">Pagar Guia DAS-MEI</div>
+            <div class="task-sub">Evite o cancelamento do CNPJ e multas diárias.</div>
+            <div class="task-warning">⚠️ Multa prevista: R$ 50,00+</div>
+          </div>
+          <span class="badge badge-red">Atrasado</span>
+        </div>
+
+        <div class="task-item upcoming">
+          <div class="task-checkbox" onclick="toggleCheck(this)"></div>
+          <div class="task-content">
+            <div class="task-title">Declarar IRPF Anual</div>
+            <div class="task-sub">Organizar extratos bancários de 2023.</div>
+          </div>
+          <span class="badge badge-blue">Próximo</span>
+        </div>
+
+        <div class="task-section-header">
+          <div class="task-section-title">
+            <div class="task-sec-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
+            Pagamentos
+          </div>
+        </div>
+
+        <div class="task-item">
+          <div class="task-checkbox" onclick="toggleCheck(this)"></div>
+          <div class="task-content">
+            <div class="task-title">Cobrar Cliente Nexus Design</div>
+            <div class="task-sub">INVOICE #4492 · R$ 4.500,00</div>
+          </div>
+          <div class="task-action">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          </div>
+        </div>
+
+        <div class="task-item">
+          <div class="task-checkbox" onclick="toggleCheck(this)"></div>
+          <div class="task-content">
+            <div class="task-title">Emitir NF-e para Techflow</div>
+            <div class="task-sub">Vencimento em 2 dias</div>
+          </div>
+          <div class="task-action">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+          </div>
+        </div>
+
+        <div class="task-section-header">
+          <div class="task-section-title">
+            <div class="task-sec-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60aaff" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+            Projetos
+          </div>
+        </div>
+
+        <div class="proj-task-card">
+          <div class="ptc-header">
+            <span class="badge badge-green" style="font-size:9px">Ativo</span>
+            <div style="display:flex;align-items:center;gap:-4px">
+              <div style="width:24px;height:24px;border-radius:50%;background:var(--green-dim);border:2px solid var(--bg);font-size:10px;display:flex;align-items:center;justify-content:center">A</div>
+              <div style="width:24px;height:24px;border-radius:50%;background:var(--surface3);border:2px solid var(--bg);font-size:10px;display:flex;align-items:center;justify-content:center;margin-left:-6px">B</div>
+              <div style="width:24px;height:24px;border-radius:50%;background:var(--surface2);border:2px solid var(--bg);font-size:9px;display:flex;align-items:center;justify-content:center;margin-left:-6px;color:var(--text-muted)">+2</div>
+            </div>
+          </div>
+          <div class="ptc-title">Redesign Portal MEI</div>
+          <div class="progress-bar" style="margin:10px 0"><div class="progress-fill" style="width:70%"></div></div>
+          <div class="ptc-sub-task">
+            <div class="task-checkbox" onclick="toggleCheck(this)" style="width:18px;height:18px"></div>
+            Finalizar wireframes de alta fidelidade
+          </div>
+          <div class="ptc-sub-task">
+            <div class="task-checkbox" onclick="toggleCheck(this)" style="width:18px;height:18px"></div>
+            Reunião de handoff com desenvolvedor
+          </div>
+        </div>
+
+        <button class="fab" onclick="">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#020810" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </button>
+      </div>
+
+      <!-- ===== NEW CLIENT ===== -->
+      <div class="screen" id="screen-new-client">
+        <div class="topbar">
+          <button class="back-btn" onclick="goBack()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Novo Cliente
+          </button>
+          <div class="topbar-icons">
+            <div class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b8aaa" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+            <div class="avatar">🧑</div>
+          </div>
+        </div>
+
+        <div class="new-client-hero">
+          <div class="sub">CRM & Expansão</div>
+          <h1>Cadastrar Entidade</h1>
+          <p>Organize sua carteira de clientes com precisão cirúrgica. Preencha os detalhes fundamentais para emissão de notas e gestão financeira.</p>
+        </div>
+
+        <div class="upload-area">
+          <div class="upload-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
+          </div>
+          <div style="font-weight:600;font-size:13px">Logo ou Foto</div>
+          <div class="upload-label">Formatos suportados: PNG, JPG (Máx. 2MB)</div>
+        </div>
+
+        <div class="tip-box">
+          <div class="tip-title">💡 Dica do Luminary</div>
+          <div class="tip-text">Manter a Razão Social atualizada evita falhas no processamento automático de impostos MEI.</div>
+        </div>
+
+        <div class="input-group">
+          <div class="input-label">Razão Social ou Nome Completo</div>
+          <div class="input-field">
+            <input type="text" placeholder="Ex: Luminary Solutions Ltda">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <div class="input-label">CNPJ ou CPF <span style="color:var(--text-dim);font-style:italic">(opcional)</span></div>
+          <div class="input-field">
+            <input type="text" placeholder="00.000.000/0001-00">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <div class="input-label">Segmento</div>
+          <select class="select-field">
+            <option>Tecnologia & Software</option>
+            <option>Marketing & Design</option>
+            <option>Saúde & Bem-estar</option>
+            <option>Educação</option>
+            <option>Outros</option>
+          </select>
+        </div>
+
+        <div class="comm-section-title">Canais de Comunicação</div>
+
+        <div class="input-group">
+          <div class="input-label">E-mail de Contato</div>
+          <div class="input-field">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            <input type="email" placeholder="financeiro@cliente.com">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <div class="input-label">Telefone / WhatsApp</div>
+          <div class="input-field">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 10.5 19.36 19.36 0 0 1 1.64 2a2 2 0 0 1 1.91-2.18h3"/></svg>
+            <input type="tel" placeholder="+55 (11) 99999-9999">
+          </div>
+        </div>
+
+        <button class="btn-outline" onclick="goBack()">Descartar</button>
+        <button class="btn-green">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#020810" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13"/><polyline points="7,3 7,8 15,8"/></svg>
+          Salvar Cliente
+        </button>
+      </div>
+
+      <!-- ===== NEW PROJECT ===== -->
+      <div class="screen" id="screen-new-project">
+        <div class="topbar">
+          <button class="back-btn" onclick="goBack()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Novo Projeto
+          </button>
+          <div class="topbar-icons">
+            <div class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b8aaa" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+            <div class="avatar">🧑</div>
+          </div>
+        </div>
+
+        <div class="new-proj-hero">
+          <div class="sub">Crescimento & Gestão</div>
+          <h1>Inicie sua próxima<br><em>grande entrega.</em></h1>
+          <p>Transforme propostas em contratos ativos. Defina os marcos financeiros para garantir sua saúde de caixa.</p>
+        </div>
+
+        <div class="input-group">
+          <div class="input-label">Nome do Projeto</div>
+          <div class="input-field">
+            <input type="text" placeholder="Ex: Identidade Visual - Tech Startup">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <div class="input-label">Selecionar Cliente</div>
+          <div class="input-field">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" placeholder="Buscar cliente existente...">
+          </div>
+          <div style="margin-top:8px">
+            <button class="btn-outline" style="margin:0;width:auto;padding:8px 16px;font-size:12px" onclick="showScreen('new-client')">+ Novo Cliente</button>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <div class="input-label">Valor do Contrato</div>
+          <div class="input-field">
+            <span style="color:var(--text-muted);font-weight:600">R$</span>
+            <input type="number" placeholder="0.000,00" style="flex:1">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <div class="input-label">Data de Entrega</div>
+          <div class="input-field">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <input type="date" style="flex:1">
+          </div>
+        </div>
+
+        <div style="padding:0 16px 12px">
+          <div class="input-label">Opções de Pagamento</div>
+          <div class="payment-options" style="padding:0;margin-top:8px">
+            <div class="pay-opt active" onclick="selectPayOpt(this)">
+              <div class="pay-opt-icon">💳</div>
+              <div class="pay-opt-label">À Vista</div>
+            </div>
+            <div class="pay-opt" onclick="selectPayOpt(this)">
+              <div class="pay-opt-icon">📅</div>
+              <div class="pay-opt-label">Parcelado</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-box">
+          <h3>Resumo do Projeto</h3>
+          <div class="summary-row">
+            <div>
+              <div class="sr-label">Margem Estimada</div>
+            </div>
+            <div class="sr-val" style="color:var(--green)">85%</div>
+          </div>
+          <div class="summary-row">
+            <div>
+              <div class="sr-label">Impostos (MEI)</div>
+              <div class="sr-note">Calculado pela categoria MEI configurada</div>
+            </div>
+            <div class="sr-val" style="color:var(--red)">- R$ 72,00</div>
+          </div>
+        </div>
+
+        <button class="btn-green">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#020810" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          Criar Projeto 🚀
+        </button>
+        <button class="btn-outline">Salvar Rascunho</button>
+
+        <div class="tip-box" style="margin-bottom:20px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span style="font-size:16px">💡</span>
+            <span class="tip-title">Dica Luminary</span>
+          </div>
+          <div class="tip-text">Projetos parcelados tendem a ter maior taxa de fechamento para contratos acima de R$ 2.000,00.</div>
+        </div>
+      </div>
+
+      <!-- ===== SIMULATOR ===== -->
+      <div class="screen" id="screen-simulator">
+        <div class="topbar">
+          <span class="logo">Financial Luminary</span>
+          <div class="topbar-icons">
+            <div class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b8aaa" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+          </div>
+        </div>
+
+        <div class="sim-hero">
+          <div class="sub">Simulador de Impostos</div>
+          <h2>Planeje sua saúde financeira MEI</h2>
+          <p>com precisão editorial.</p>
+        </div>
+
+        <div class="slider-card">
+          <div class="slider-label">Faturamento Mensal Estimado</div>
+          <div class="slider-val" id="sim-val">R$ 5.000</div>
+          <input type="range" min="0" max="6750" value="5000" id="sim-slider" oninput="updateSim(this.value)">
+          <div class="slider-limits">
+            <span>R$ 0</span>
+            <span>Limite MEI: R$ 6.750/mês</span>
+          </div>
+          <div class="liquid-box">
+            <div class="liquid-label">💰 Lucro Líquido Estimado</div>
+            <div class="liquid-val" id="sim-liquid">R$ 4.929,00</div>
+            <div class="liquid-sub">Baseado no faturamento de R$ 5.000,00</div>
+          </div>
+        </div>
+
+        <div class="tax-card">
+          <div class="tax-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+          <div class="tax-content">
+            <div class="tax-name">Guia DAS</div>
+            <div class="tax-desc">Contribuição fixa mensal que engloba INSS, ICMS e ISS. Obrigatória para manter o CNPJ ativo.</div>
+            <div class="tax-label-sm">Valor Fixo</div>
+            <div class="tax-val-big">R$ 71,00</div>
+          </div>
+        </div>
+
+        <div class="tax-card">
+          <div class="tax-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
+          <div class="tax-content">
+            <div class="tax-name">IRPF Estimado</div>
+            <div class="tax-desc">Imposto de Renda sobre a parcela tributável do seu lucro. MEI tem isenção parcial (32% para serviços).</div>
+            <div class="tax-label-sm">A Recolher</div>
+            <div class="tax-val-big amount-green">R$ 0,00</div>
+          </div>
+        </div>
+
+        <div class="tip-card-green">
+          <div class="tip-icon-circle"><span style="font-size:18px">💡</span></div>
+          <div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px">Dica de Gestão</div>
+          <p>Neste faturamento, você está 100% isento de IRPF devido à regra de presunção de lucro para MEI Prestador de Serviços.</p>
+          <button class="btn-green" style="margin:12px 0 0;width:100%;padding:12px;background:#020810;color:var(--green);border:1px solid var(--green);box-shadow:none;font-size:12px">Ver Detalhes</button>
+        </div>
+
+        <div class="detail-card">
+          <div class="detail-header">
+            <h3>Detalhamento da Simulação</h3>
+            <span class="badge badge-green" style="font-size:9px">Tempo Real</span>
+          </div>
+          <div class="detail-row">
+            <div class="dr-left"><div class="dr-label">Faturamento Bruto</div><div class="dr-sub">Total recebido por serviços</div></div>
+            <div class="dr-val green">+ R$ 5.000,00</div>
+          </div>
+          <div class="detail-row">
+            <div class="dr-left"><div class="dr-label">Custo do DAS</div><div class="dr-sub">Valor fixo mensal obrigatório</div></div>
+            <div class="dr-val red">- R$ 71,00</div>
+          </div>
+          <div class="detail-row">
+            <div class="dr-left"><div class="dr-label">Isenção de Lucro Presumido (32%)</div><div class="dr-sub">Parcela que não paga imposto de renda</div></div>
+            <div class="dr-val">R$ 1.600,00</div>
+          </div>
+          <div class="total-row">
+            <div class="tr-label">Líquido na Conta</div>
+            <div class="tr-val">R$ 4.929,00</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== FORECAST ===== -->
+      <div class="screen" id="screen-forecast">
+        <div class="topbar">
+          <span class="logo">FreelaFin</span>
+          <div class="topbar-icons">
+            <div class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b8aaa" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+          </div>
+        </div>
+
+        <div class="forecast-hero">
+          <h1>Previsão de Caixa</h1>
+          <p>Análise preditiva para os próximos meses</p>
+        </div>
+
+        <div class="saldo-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div class="saldo-label">Saldo Projetado</div>
+              <div class="saldo-amount">R$ 14.280,00</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;text-align:right;margin-bottom:4px">Crescimento</div>
+              <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--green)">+12.4%</div>
+            </div>
+          </div>
+          <div class="chart-area">
+            <svg class="chart-svg" viewBox="0 0 320 120" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="rgba(57,255,110,0.3)"/>
+                  <stop offset="100%" stop-color="rgba(57,255,110,0)"/>
+                </linearGradient>
+              </defs>
+              <path d="M0,80 C30,70 50,85 80,75 C110,65 130,90 160,80 C190,70 220,60 260,30 C280,20 300,15 320,10"
+                    fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M0,80 C30,70 50,85 80,75 C110,65 130,90 160,80 C190,70 220,60 260,30 C280,20 300,15 320,10 L320,120 L0,120 Z"
+                    fill="url(#chartGrad)"/>
+              <circle cx="160" cy="80" r="5" fill="var(--red)" stroke="var(--bg)" stroke-width="2"/>
+              <text x="155" y="98" fill="var(--red)" font-size="8" text-anchor="middle" font-family="DM Sans">VALE</text>
+              <circle cx="320" cy="10" r="5" fill="var(--green)" stroke="var(--bg)" stroke-width="2"/>
+              <text x="305" y="8" fill="var(--green)" font-size="8" text-anchor="middle" font-family="DM Sans">MÁXIMO</text>
+            </svg>
+          </div>
+          <div class="chart-months"><span>MAIO</span><span>JUNHO</span><span>JULHO</span></div>
+          <div class="chart-note">* Projeção baseada em faturamentos recorrentes e despesas fixas cadastradas.</div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 8px">
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700">Próximos Vencimentos</div>
+          <span style="font-size:11px;color:var(--green);font-weight:700;cursor:pointer">VER TODOS</span>
+        </div>
+
+        <div class="vencimento-item">
+          <div class="venc-icon urgent">
+            <span style="font-size:18px;color:var(--red)">!</span>
+          </div>
+          <div class="venc-content">
+            <div class="venc-title">Imposto DAS (dia 20)</div>
+            <div class="venc-sub">Vence em 2 dias</div>
+          </div>
+          <div class="venc-right">
+            <div class="venc-amount">R$ 72,00</div>
+            <div class="venc-status">›</div>
+          </div>
+        </div>
+
+        <div class="vencimento-item">
+          <div class="venc-icon calendar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60aaff" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="venc-content">
+            <div class="venc-title">Parcela do MEI</div>
+            <div class="venc-sub">Vence em 15 dias</div>
+          </div>
+          <div class="venc-right">
+            <div class="venc-amount">R$ 67,00</div>
+            <div class="venc-status">›</div>
+          </div>
+        </div>
+
+        <div class="vencimento-item">
+          <div class="venc-icon doc">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+          </div>
+          <div class="venc-content">
+            <div class="venc-title">Relatório Trimestral</div>
+            <div class="venc-sub">Final do mês (30/07)</div>
+          </div>
+          <div class="venc-right">
+            <div class="venc-amount" style="color:var(--text-muted);font-size:12px">Pendente</div>
+            <div class="venc-status">›</div>
+          </div>
+        </div>
+
+        <div class="metrics-row">
+          <div class="metric-box">
+            <div class="mb-icon">📈</div>
+            <div class="mb-label">Melhor Mês</div>
+            <div class="mb-val">Agosto</div>
+          </div>
+          <div class="metric-box">
+            <div class="mb-icon">🏦</div>
+            <div class="mb-label">Reserva</div>
+            <div class="mb-val amount-green">94% Meta</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== REPORTS ===== -->
+      <div class="screen" id="screen-reports">
+        <div class="topbar">
+          <span class="logo">FreelaFin</span>
+          <div class="topbar-icons">
+            <div class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b8aaa" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+          </div>
+        </div>
+
+        <div class="report-hero">
+          <div class="sub">Painel de Controle</div>
+          <h1>Relatórios <em>Fiscais</em></h1>
+          <p>Organize sua contabilidade MEI com um clique.</p>
+        </div>
+
+        <div class="timeline">
+          <div class="tl-item">
+            <div class="tl-dot active"></div>
+            <div class="tl-content">
+              <div class="tl-period">Agosto 2024 <span class="badge badge-green" style="font-size:9px">Mês Atual</span></div>
+              <div class="report-card">
+                <div class="rc-row">
+                  <div class="rc-block">
+                    <div class="rcb-l">Faturamento</div>
+                    <div class="rcb-v">R$ 8.500,00</div>
+                  </div>
+                  <div class="rc-block" style="text-align:right">
+                    <div class="rcb-l">Impostos (DAS)</div>
+                    <div class="rcb-v green">R$ 71,00</div>
+                  </div>
+                </div>
+                <div class="report-btns">
+                  <button class="rc-btn primary">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Gerar PDF
+                  </button>
+                  <button class="rc-btn">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    Enviar Email
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-dot done"></div>
+            <div class="tl-content">
+              <div class="tl-period">Julho 2024 <span style="font-size:12px;color:var(--text-muted);font-style:italic;font-weight:400">Finalizado</span></div>
+              <div class="report-mini">
+                <div class="report-mini-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+                </div>
+                <div class="report-mini-content">
+                  <div class="rmc-label">Faturamento</div>
+                  <div class="rmc-val">R$ 7.200,00</div>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-dot old"></div>
+            <div class="tl-content">
+              <div class="tl-period" style="opacity:0.5">Junho 2024</div>
+              <div class="report-mini" style="opacity:0.5">
+                <div class="report-mini-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg>
+                </div>
+                <div class="report-mini-content">
+                  <div class="rmc-label">Faturamento</div>
+                  <div class="rmc-val">R$ 9.150,00</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hist-btn">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Ver Histórico Completo de 2024
+        </div>
+      </div>
+
+      <!-- ===== CONTRACTS ===== -->
+      <div class="screen" id="screen-contracts">
+        <div class="topbar">
+          <span class="logo" style="color:var(--green)">Financial Luminary</span>
+          <div class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b8aaa" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        </div>
+
+        <div class="contracts-hero">
+          <h1>Gestão de Contratos</h1>
+          <p>Controle centralizado de documentos legais</p>
+        </div>
+
+        <button class="btn-green">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#020810" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Fazer Upload de Contrato
+        </button>
+
+        <div class="search-bar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" placeholder="Buscar por cliente ou tipo...">
+        </div>
+
+        <div class="contract-card">
+          <div class="cc-header">
+            <div class="cc-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg></div>
+            <div class="cc-meta">
+              <div class="cc-badges">
+                <span class="badge badge-green">Service</span>
+                <span style="font-size:11px;color:var(--text-muted)">DOC-2024-082</span>
+              </div>
+              <div class="cc-name">Nexus Tech Solutions</div>
+              <div class="cc-date">Data: 14 de Março, 2024</div>
+            </div>
+            <div class="cc-more">⋮</div>
+          </div>
+          <div class="cc-status">
+            <div class="status-signed">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
+              SIGNED
+            </div>
+            <span class="badge badge-green" style="font-size:9px">Vigente</span>
+          </div>
+        </div>
+
+        <div class="contract-card">
+          <div class="cc-header">
+            <div class="cc-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <div class="cc-meta">
+              <div class="cc-badges">
+                <span class="badge badge-purple">NDA</span>
+                <span style="font-size:11px;color:var(--text-muted)">SEC-2024-015</span>
+              </div>
+              <div class="cc-name">Stellar Systems Ltd.</div>
+              <div class="cc-date">Data: 02 de Março, 2024</div>
+            </div>
+            <div class="cc-more">⋮</div>
+          </div>
+          <div class="cc-status">
+            <div class="status-pending">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              PENDING
+            </div>
+            <span class="badge badge-orange" style="font-size:9px">Aguardando</span>
+          </div>
+        </div>
+
+        <div class="contract-card">
+          <div class="cc-header">
+            <div class="cc-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+            <div class="cc-meta">
+              <div class="cc-badges">
+                <span class="badge badge-blue">Addendum</span>
+                <span style="font-size:11px;color:var(--text-muted)">MOD-2023-991</span>
+              </div>
+              <div class="cc-name">Creative Flow Inc.</div>
+              <div class="cc-date">Data: 28 de Fevereiro, 2024</div>
+            </div>
+            <div class="cc-more">⋮</div>
+          </div>
+          <div class="cc-status">
+            <div class="status-signed">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>
+              SIGNED
+            </div>
+          </div>
+        </div>
+
+        <div class="pipeline-card">
+          <div class="pc-label">Visão Geral da Pipeline</div>
+          <div class="pc-title">Monitoramento de Fluxo Legal</div>
+          <div class="pipeline-stats">
+            <div class="pipeline-stat">
+              <div class="ps-l">Signed</div>
+              <div class="ps-v green">24</div>
+            </div>
+            <div class="pipeline-stat">
+              <div class="ps-l">Awaiting</div>
+              <div class="ps-v orange">07</div>
+            </div>
+            <div class="pipeline-stat">
+              <div class="ps-l">Total</div>
+              <div class="ps-v">31</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /screens -->
+
+    <!-- BOTTOM NAV - Main (home/projects/clients/tasks) -->
+    <div class="bottom-nav" id="nav-main">
+      <button class="nav-btn active" id="nav-home" onclick="showMain('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+        Home
+      </button>
+      <button class="nav-btn" id="nav-projects" onclick="showMain('projects')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Projects
+      </button>
+      <button class="nav-btn" id="nav-clients" onclick="showMain('clients')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Clients
+      </button>
+      <button class="nav-btn" id="nav-tasks" onclick="showMain('tasks')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Tasks
+      </button>
+    </div>
+
+    <!-- BOTTOM NAV - Alt (simulator/forecast/reports/contracts) -->
+    <div class="bottom-nav" id="nav-alt" style="display:none">
+      <button class="nav-btn" id="nav-sim" onclick="showAlt('simulator')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="8" x2="10" y2="8"/><line x1="8" y1="16" x2="14" y2="16"/></svg>
+        Simulador
+      </button>
+      <button class="nav-btn" id="nav-fore" onclick="showAlt('forecast')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+        Forecast
+      </button>
+      <button class="nav-btn" id="nav-rep" onclick="showAlt('reports')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Reports
+      </button>
+      <button class="nav-btn" id="nav-cont" onclick="showAlt('contracts')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        Contracts
+      </button>
+    </div>
+
+    <!-- NAV TOGGLE PILL -->
+    <div style="position:absolute;bottom:82px;left:50%;transform:translateX(-50%);z-index:60">
+      <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:20px;overflow:hidden;">
+        <button id="pill-main" onclick="switchNav('main')"
+          style="padding:4px 12px;font-size:10px;font-weight:700;letter-spacing:0.5px;border:none;cursor:pointer;background:var(--green);color:#020810;border-radius:20px;font-family:'DM Sans',sans-serif;transition:all 0.2s">
+          Main
+        </button>
+        <button id="pill-alt" onclick="switchNav('alt')"
+          style="padding:4px 12px;font-size:10px;font-weight:700;letter-spacing:0.5px;border:none;cursor:pointer;background:transparent;color:var(--text-muted);font-family:'DM Sans',sans-serif;transition:all 0.2s">
+          Tools
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /phone -->
+</div><!-- /shell -->
+
+<script>
+  let currentScreen = 'home';
+  let prevScreen = null;
+  let currentNav = 'main';
+
+  function showScreen(id) {
+    prevScreen = currentScreen;
+    const prev = document.getElementById('screen-' + currentScreen);
+    const next = document.getElementById('screen-' + id);
+    if (!next) return;
+    prev.classList.remove('active');
+    next.classList.add('active');
+    currentScreen = id;
+    next.scrollTop = 0;
+    // hide navs for overlay screens
+    const overlays = ['new-client','new-project'];
+    const navMain = document.getElementById('nav-main');
+    const navAlt = document.getElementById('nav-alt');
+    if (overlays.includes(id)) {
+      navMain.style.display = 'none';
+      navAlt.style.display = 'none';
+    }
+  }
+
+  function goBack() {
+    if (prevScreen) {
+      const prev = document.getElementById('screen-' + currentScreen);
+      const next = document.getElementById('screen-' + prevScreen);
+      prev.classList.remove('active');
+      next.classList.add('active');
+      currentScreen = prevScreen;
+      prevScreen = null;
+      // restore navs
+      if (currentNav === 'main') {
+        document.getElementById('nav-main').style.display = 'flex';
+      } else {
+        document.getElementById('nav-alt').style.display = 'flex';
+      }
+    }
+  }
+
+  function showMain(id) {
+    const ids = ['home','projects','clients','tasks'];
+    ids.forEach(i => document.getElementById('nav-'+i).classList.remove('active'));
+    document.getElementById('nav-'+id).classList.add('active');
+    showScreen(id);
+    document.getElementById('nav-main').style.display = 'flex';
+  }
+
+  function showAlt(id) {
+    const map = {simulator:'sim',forecast:'fore',reports:'rep',contracts:'cont'};
+    const ids = ['sim','fore','rep','cont'];
+    ids.forEach(i => document.getElementById('nav-'+i).classList.remove('active'));
+    document.getElementById('nav-'+map[id]).classList.add('active');
+    showScreen(id);
+    document.getElementById('nav-alt').style.display = 'flex';
+  }
+
+  function switchNav(type) {
+    currentNav = type;
+    const navMain = document.getElementById('nav-main');
+    const navAlt = document.getElementById('nav-alt');
+    const pillMain = document.getElementById('pill-main');
+    const pillAlt = document.getElementById('pill-alt');
+    if (type === 'main') {
+      navMain.style.display = 'flex';
+      navAlt.style.display = 'none';
+      pillMain.style.background = 'var(--green)';
+      pillMain.style.color = '#020810';
+      pillAlt.style.background = 'transparent';
+      pillAlt.style.color = 'var(--text-muted)';
+      showMain('home');
+    } else {
+      navMain.style.display = 'none';
+      navAlt.style.display = 'flex';
+      pillAlt.style.background = 'var(--green)';
+      pillAlt.style.color = '#020810';
+      pillMain.style.background = 'transparent';
+      pillMain.style.color = 'var(--text-muted)';
+      showAlt('simulator');
+    }
+  }
+
+  function toggleCheck(el) {
+    el.classList.toggle('checked');
+    if (el.classList.contains('checked')) {
+      el.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#020810" stroke-width="3"><polyline points="20,6 9,17 4,12"/></svg>';
+      el.closest('.task-item').style.opacity = '0.5';
+    } else {
+      el.innerHTML = '';
+      el.closest('.task-item').style.opacity = '1';
+    }
+  }
+
+  function selectPayOpt(el) {
+    document.querySelectorAll('.pay-opt').forEach(o => o.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function updateSim(val) {
+    const num = parseInt(val);
+    document.getElementById('sim-val').textContent = 'R$ ' + num.toLocaleString('pt-BR');
+    const liquid = Math.max(0, num - 71);
+    document.getElementById('sim-liquid').textContent = 'R$ ' + liquid.toLocaleString('pt-BR') + ',00';
+  }
+</script>
+</body>
+</html>
